@@ -54,5 +54,4 @@ public class ImageFilter {
 			int[] help; help = src; src = dst; dst = help;
 		}
 	}
-
 }

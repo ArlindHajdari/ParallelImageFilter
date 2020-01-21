@@ -17,7 +17,7 @@ public class TestImageFilter {
 		PrintStream originalOut = new PrintStream(fileStream);
 		System.setOut(originalOut);
 
-		int[] nthreads = {1, 2, 4, 8, 16};
+		int[] nthreads = {8};
 		try {
 			srcFileName = args[0];
 			File srcFile = new File(srcFileName);
@@ -69,7 +69,7 @@ public class TestImageFilter {
 			long startTime_p = System.currentTimeMillis();
 
 			int[] Paralleldst = new int[src.length];
-			ParallelFJImageFilter filter_p = new ParallelFJImageFilter(src, Paralleldst, w, h, 1, h - 1);
+			ParallelFJImageFilter filter_p = new ParallelFJImageFilter(src, Paralleldst, w, 1, h-1);
 			ForkJoinPool pool = new ForkJoinPool(nthread);
 			pool.invoke(filter_p);
 

@@ -4,18 +4,16 @@ public class ParallelFJImageFilter extends RecursiveAction{
     private int[] src;
     private int[] dst;
     private int width;
-    private int height;
     private int start;
     private int end;
 
     private final int NRSTEPS = 100;
-    private final int threshold = 1100;
+    private final int threshold = 500;
 
-    public ParallelFJImageFilter(int[] src, int[] dst, int w, int h, int start, int end) {
+    public ParallelFJImageFilter(int[] src, int[] dst, int w, int start, int end) {
         this.src = src;
         this.dst = dst;
         width = w;
-        height = h;
         this.start = start;
         this.end = end;
     }
@@ -58,15 +56,14 @@ public class ParallelFJImageFilter extends RecursiveAction{
 
     @Override
     protected void compute() {
-        if (end - start < threshold) {
-            apply();
-        } else {
-            double temp = (double)(end + start) / (double) 2;
-            int middle = (int) Math.round(temp/10.0) * 10;
+        if (end - start > threshold) {
+            int distance = (end - start) / 2;
 
-            ParallelFJImageFilter subTask1 = new ParallelFJImageFilter(src, dst, width, height, start, middle);
-            ParallelFJImageFilter subTask2 = new ParallelFJImageFilter(src, dst, width, height, middle, end);
+            ParallelFJImageFilter subTask1 = new ParallelFJImageFilter(src, dst, width, start, start + distance);
+            ParallelFJImageFilter subTask2 = new ParallelFJImageFilter(src, dst, width, start + distance, end);
             invokeAll(subTask1, subTask2);
+        } else {
+            apply();
         }
     }
 }
