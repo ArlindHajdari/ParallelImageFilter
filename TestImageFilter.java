@@ -15,8 +15,10 @@ public class TestImageFilter {
 		FileOutputStream fileStream = null;
 		PrintStream originalOut = null;
 
+		int NSTEPS = 100;
 		int availableProcessors = Runtime.getRuntime().availableProcessors();
-		int[] nthreads = {8};
+		int[] nthreads = {1,2,4,8,16};
+
 		try {
 			srcFileName = args[0];
 			File srcFile = new File(srcFileName);
@@ -42,30 +44,31 @@ public class TestImageFilter {
 		originalOut.println();
 	
 		int[] src_s = image.getRGB(0, 0, w, h, null, 0, w);
-		int[] src_p = image.getRGB(0, 0, w, h, null, 0, w);
 		int[] dst = new int[src_s.length];
 
-//		originalOut.println("Starting sequential image filter.");
-//
-//		long startTime = System.currentTimeMillis();
-//		ImageFilter filter0 = new ImageFilter(src_s, dst, w, h);
-//		filter0.apply();
-//		long endTime = System.currentTimeMillis();
-//
-//		long tSequential = endTime - startTime;
-//		originalOut.println("Sequential image filter took " + tSequential + " milliseconds.");
+		originalOut.println("Starting sequential image filter.");
+
+		long startTime = System.currentTimeMillis();
+		ImageFilter filter0 = new ImageFilter(src_s, dst, w, h);
+		filter0.apply();
+		long endTime = System.currentTimeMillis();
+
+		long tSequential = endTime - startTime;
+		originalOut.println("Sequential image filter took " + tSequential + " milliseconds.");
 
 
 //		Read image just for testing phase
-		BufferedImage dstImage = ImageIO.read(new File("FilteredIMAGE1.JPG"));
-//		BufferedImage dstImage = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
-//		dstImage.setRGB(0, 0, w, h, dst, 0, w);
+//		BufferedImage dstImage = ImageIO.read(new File("FilteredIMAGE1.JPG"));
+		BufferedImage dstImage = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
+		dstImage.setRGB(0, 0, w, h, dst, 0, w);
 
-//		String dstName = "Filtered" + srcFileName;
-//		File dstFile = new File(dstName);
-//		ImageIO.write(dstImage, "jpg", dstFile);
-//		originalOut.println("Output image: " + dstName);
-		long tSequential = 88967;
+		String dstName = "Filtered" + srcFileName;
+		File dstFile = new File(dstName);
+		ImageIO.write(dstImage, "jpg", dstFile);
+		originalOut.println("Output image: " + dstName);
+		originalOut.println();
+
+//		long tSequential = 88967;
 
 		originalOut.println("Available processors: " + availableProcessors);
 		originalOut.println();
@@ -75,11 +78,16 @@ public class TestImageFilter {
 			originalOut.println("Starting parallel image filter using " + nthread + " threads.");
 			long startTime_p = System.currentTimeMillis();
 
+			int[] src_p = image.getRGB(0, 0, w, h, null, 0, w);
 			int[] Paralleldst = new int[src_p.length];
-			ParallelFJImageFilter filter_p = new ParallelFJImageFilter(src_p, Paralleldst, w, 1, h-1, (h/nthread)+2);
-			ForkJoinPool pool = new ForkJoinPool(nthread);
-			pool.invoke(filter_p);
 
+			for (int i = 0; i < NSTEPS; i++){
+				ParallelFJImageFilter filter_p = new ParallelFJImageFilter(src_p, Paralleldst, w, 1, h-1, (h/nthread) + 1);
+				ForkJoinPool pool = new ForkJoinPool(nthread);
+				pool.invoke(filter_p);
+				// swap references
+				int[] help; help = src_p; src_p = Paralleldst; Paralleldst = help;
+			}
 			long endTime_p = System.currentTimeMillis();
 
 			long tParallel = endTime_p - startTime_p;
