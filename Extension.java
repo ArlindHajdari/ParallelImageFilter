@@ -13,7 +13,7 @@ public class Extension {
         int width  = imgA.getWidth();
         int height = imgA.getHeight();
 
-        // Loop over every pixel.
+        // Loop over every pixel (excluding outter row and col).
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
                 // Compare the pixels for equality.

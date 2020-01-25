@@ -10,18 +10,20 @@ import javax.imageio.ImageIO;
 public class TestImageFilter {
 
 	public static void main(String[] args) throws Exception {
-		
 		BufferedImage image = null;
 		String srcFileName = null;
-		FileOutputStream fileStream = new FileOutputStream("output.txt");
-		PrintStream originalOut = new PrintStream(fileStream);
-		System.setOut(originalOut);
+		FileOutputStream fileStream = null;
+		PrintStream originalOut = null;
 
+		int availableProcessors = Runtime.getRuntime().availableProcessors();
 		int[] nthreads = {8};
 		try {
 			srcFileName = args[0];
 			File srcFile = new File(srcFileName);
 			image = ImageIO.read(srcFile);
+			fileStream = new FileOutputStream(srcFileName.equals("IMAGE1.JPG") ? "out1.txt" : "out2.txt");
+			originalOut = new PrintStream(fileStream);
+			System.setOut(originalOut);
 		}
 		catch (ArrayIndexOutOfBoundsException e) {
 			originalOut.println("Usage: java TestAll <image-file>");
@@ -39,13 +41,14 @@ public class TestImageFilter {
 		originalOut.println("Image size is " + w + "x" + h);
 		originalOut.println();
 	
-		int[] src = image.getRGB(0, 0, w, h, null, 0, w);
-		int[] dst = new int[src.length];
+		int[] src_s = image.getRGB(0, 0, w, h, null, 0, w);
+		int[] src_p = image.getRGB(0, 0, w, h, null, 0, w);
+		int[] dst = new int[src_s.length];
 
 //		originalOut.println("Starting sequential image filter.");
 //
 //		long startTime = System.currentTimeMillis();
-//		ImageFilter filter0 = new ImageFilter(src, dst, w, h);
+//		ImageFilter filter0 = new ImageFilter(src_s, dst, w, h);
 //		filter0.apply();
 //		long endTime = System.currentTimeMillis();
 //
@@ -57,19 +60,23 @@ public class TestImageFilter {
 		BufferedImage dstImage = ImageIO.read(new File("FilteredIMAGE1.JPG"));
 //		BufferedImage dstImage = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
 //		dstImage.setRGB(0, 0, w, h, dst, 0, w);
-//
+
 //		String dstName = "Filtered" + srcFileName;
 //		File dstFile = new File(dstName);
 //		ImageIO.write(dstImage, "jpg", dstFile);
+//		originalOut.println("Output image: " + dstName);
 		long tSequential = 88967;
+
+		originalOut.println("Available processors: " + availableProcessors);
+		originalOut.println();
 
 		BufferedImage dstParallelImage = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
 		for (int nthread : nthreads) {
-			System.out.println("Starting parallel image filter using " + nthread + " threads.");
+			originalOut.println("Starting parallel image filter using " + nthread + " threads.");
 			long startTime_p = System.currentTimeMillis();
 
-			int[] Paralleldst = new int[src.length];
-			ParallelFJImageFilter filter_p = new ParallelFJImageFilter(src, Paralleldst, w, 1, h-1);
+			int[] Paralleldst = new int[src_p.length];
+			ParallelFJImageFilter filter_p = new ParallelFJImageFilter(src_p, Paralleldst, w, 1, h-1, (h/nthread)+2);
 			ForkJoinPool pool = new ForkJoinPool(nthread);
 			pool.invoke(filter_p);
 
@@ -83,8 +90,8 @@ public class TestImageFilter {
 			boolean verification_passed = Extension.CompareImages(dstImage, dstParallelImage);
 
 			originalOut.println("Parallel image filter took " + tParallel + " milliseconds using " + nthread + " threads.");
-			originalOut.println("Output image verified " + (verification_passed ? "successfully" : "with errors!"));
-			originalOut.println("Speedup " + (double) (tSequential / tParallel) + ((double) (tSequential / tParallel) > 0.7 ? " ok (>= " + (tSequential / tParallel) + ")" : ""));
+			originalOut.println("Output image verified " + (verification_passed ? "successfully" : "unsuccessfully"));
+			originalOut.println("Speedup " + (double) (tSequential / tParallel) + ((double) (tSequential / tParallel) > (0.7 * nthread) ? " ok (>= " + (tSequential / tParallel)*nthread + ")" : ""));
 			originalOut.println();
 		}
 

@@ -1,8 +1,10 @@
 Source image: IMAGE1.JPG
 Image size is 6000x4000
 
+Available processors: 4
+
 Starting parallel image filter using 4 threads.
-Parallel image filter took 41208 milliseconds using 4 threads.
+Parallel image filter took 37038 milliseconds using 4 threads.
 Output image verified unsuccessfully
 Speedup 2.0
 
